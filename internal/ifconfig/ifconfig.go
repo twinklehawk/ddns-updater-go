@@ -12,24 +12,20 @@ const (
 	DefaultBaseUrl = "https://ifconfig.me"
 )
 
-type IfConfigClient interface {
-	GetCurrentIp(ctx context.Context) (string, error)
+type IfConfigClient struct {
+	httpClient *http.Client
+	baseUrl    string
 }
 
-func DefaultClient() IfConfigClient {
+func DefaultClient() *IfConfigClient {
 	return NewClient(DefaultBaseUrl)
 }
 
-func NewClient(baseUrl string) IfConfigClient {
-	return &internalIfCongigClient{
+func NewClient(baseUrl string) *IfConfigClient {
+	return &IfConfigClient{
 		httpClient: &http.Client{Timeout: 30 * time.Second},
 		baseUrl:    baseUrl,
 	}
-}
-
-type internalIfCongigClient struct {
-	httpClient *http.Client
-	baseUrl    string
 }
 
 type IfConfigError struct {
@@ -47,7 +43,7 @@ func (e *IfConfigError) Error() string {
 	return fmt.Sprintf("Error calling IfConfig: %d - %s", e.StatusCode, message)
 }
 
-func (client *internalIfCongigClient) GetCurrentIp(ctx context.Context) (string, error) {
+func (client *IfConfigClient) GetCurrentIp(ctx context.Context) (string, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, client.baseUrl+"/ip", http.NoBody)
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)

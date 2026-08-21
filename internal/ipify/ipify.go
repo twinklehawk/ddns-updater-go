@@ -12,24 +12,20 @@ const (
 	DefaultBaseUrl = "https://api.ipify.org"
 )
 
-type IpifyClient interface {
-	GetCurrentIp(ctx context.Context) (string, error)
+type IpifyClient struct {
+	httpClient *http.Client
+	baseUrl    string
 }
 
-func DefaultClient() IpifyClient {
+func DefaultClient() *IpifyClient {
 	return NewClient(DefaultBaseUrl)
 }
 
-func NewClient(baseUrl string) IpifyClient {
-	return &internalIpifyClient{
+func NewClient(baseUrl string) *IpifyClient {
+	return &IpifyClient{
 		httpClient: &http.Client{Timeout: 30 * time.Second},
 		baseUrl:    baseUrl,
 	}
-}
-
-type internalIpifyClient struct {
-	httpClient *http.Client
-	baseUrl    string
 }
 
 type IpifyError struct {
@@ -47,7 +43,7 @@ func (e *IpifyError) Error() string {
 	return fmt.Sprintf("Error calling IfConfig: %d - %s", e.StatusCode, message)
 }
 
-func (client *internalIpifyClient) GetCurrentIp(ctx context.Context) (string, error) {
+func (client *IpifyClient) GetCurrentIp(ctx context.Context) (string, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, client.baseUrl, http.NoBody)
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)

@@ -52,9 +52,9 @@ func buildIpProviders() []CurrentIpProvider {
 	}
 }
 
-func buildDdnsClients(config *config.Config) map[string]namecheap.NamecheapDdnsClient {
+func buildDdnsClients(config *config.Config) map[string]*namecheap.NamecheapDdnsClient {
 	// TODO create ddns client interface
-	ddnsClients := make(map[string]namecheap.NamecheapDdnsClient)
+	ddnsClients := make(map[string]*namecheap.NamecheapDdnsClient)
 	ddnsClients["namecheap"] = namecheap.NewClient(namecheap.DefaultBaseUrl, config.Namecheap.Password)
 	return ddnsClients
 }
@@ -78,7 +78,7 @@ func getCurrentIpAddress(providers []CurrentIpProvider) (string, error) {
 func processDdnsEntry(
 	ddnsEntry config.DdnsConfig,
 	currentIp string,
-	clients map[string]namecheap.NamecheapDdnsClient,
+	clients map[string]*namecheap.NamecheapDdnsClient,
 ) error {
 	client := clients[ddnsEntry.Provider]
 	if client == nil {

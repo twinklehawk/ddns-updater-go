@@ -12,30 +12,18 @@ const (
 	DefaultBaseUrl = "https://dynamicdns.park-your-domain.com"
 )
 
-type NamecheapDdnsClient interface {
-	GetHostIpv4(ctx context.Context,
-		subdomain string,
-		domain string,
-	) (string, error)
-
-	UpdateHostIpv4(ctx context.Context,
-		subdomain string,
-		domain string,
-		ip string) error
+type NamecheapDdnsClient struct {
+	httpClient *http.Client
+	baseUrl    string
+	password   string
 }
 
-func NewClient(baseUrl string, password string) NamecheapDdnsClient {
-	return &internalNamecheapDdnsClient{
+func NewClient(baseUrl string, password string) *NamecheapDdnsClient {
+	return &NamecheapDdnsClient{
 		httpClient: &http.Client{Timeout: 30 * time.Second},
 		baseUrl:    baseUrl,
 		password:   password,
 	}
-}
-
-type internalNamecheapDdnsClient struct {
-	httpClient *http.Client
-	baseUrl    string
-	password   string
 }
 
 type NamecheapDdnsError struct {
@@ -53,7 +41,7 @@ func (e *NamecheapDdnsError) Error() string {
 	return fmt.Sprintf("Error calling Namecheap DDNS: %d - %s", e.StatusCode, message)
 }
 
-func (client *internalNamecheapDdnsClient) GetHostIpv4(
+func (client *NamecheapDdnsClient) GetHostIpv4(
 	ctx context.Context,
 	subdomain string,
 	domain string,
@@ -74,7 +62,7 @@ func (client *internalNamecheapDdnsClient) GetHostIpv4(
 	return addr[0].String(), nil
 }
 
-func (client *internalNamecheapDdnsClient) UpdateHostIpv4(
+func (client *NamecheapDdnsClient) UpdateHostIpv4(
 	ctx context.Context,
 	subdomain string,
 	domain string,
