@@ -1,0 +1,15 @@
+name: Pull request check
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  pr-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@v7
+        with:
+          go-version: 1.27.0
+      # TODO need linting, maybe https://github.com/golangci/golangci-lint-action
+      - name: test
+        run: go test -cover ./...
