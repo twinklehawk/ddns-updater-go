@@ -64,7 +64,7 @@ func getCurrentIpAddress(providers []CurrentIpProvider) (string, error) {
 	for _, provider := range providers {
 		ip, err := provider.GetCurrentIp(context.Background())
 		if err != nil {
-			slog.Warn("failed to get IP from %T: %v", slog.Any("error", err))
+			slog.Warn("failed to get IP from provider", slog.Any("error", err))
 		} else {
 			currentIp = ip
 		}
