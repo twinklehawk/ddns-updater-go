@@ -6,12 +6,10 @@
 //   - updates the configured IP address for the host to the current IP address if different
 //
 // Ddns-updater-go configuration is loaded from config.yaml in the current directory.
-// See [config] for details on configuration.
+// See the config package for details on configuration.
 package main
 
 import (
-	"context"
-	"fmt"
 	"log/slog"
 	"os"
 
@@ -27,28 +25,32 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	slog.Info("processing ddns entries")
+	if err := run(); err != nil {
+		slog.Error("run failed", slog.Any("error", err))
+		os.Exit(1)
+	}
+}
 
+func run() error {
+	slog.Info("loading config")
 	config, err := config.ReadConfig("")
 	if err != nil {
-		slog.Error("unable to read config", slog.Any("error", err))
-		return
+		return err
 	}
 
-	ipProviders := buildIpProviders()
-	ddnsClients := buildDdnsClients(config)
-
-	currentIp, err := getCurrentIpAddress(ipProviders)
-	if err != nil {
-		slog.Error("unable to get current IP address", slog.Any("error", err))
-		return
+	updater := ddnsUpdater{
+		ipProviders:  buildIpProviders(),
+		ddnsServices: buildDdnsServices(config),
 	}
-	slog.Info("retrieved current IP address: " + currentIp)
 
 	slog.Info("processing ddns for domain: " + config.Ddns.Domain)
-	processDdnsEntry(config.Ddns, currentIp, ddnsClients)
-
+	err = updater.processDdnsEntry(config.Ddns)
+	if err != nil {
+		return err
+	}
 	slog.Info("finished processing ddns entries")
+
+	return nil
 }
 
 func buildIpProviders() []ipprovider.CurrentIpProvider {
@@ -58,57 +60,8 @@ func buildIpProviders() []ipprovider.CurrentIpProvider {
 	}
 }
 
-func buildDdnsClients(config *config.Config) map[string]ddnsservice.DdnsService {
-	ddnsClients := make(map[string]ddnsservice.DdnsService)
-	ddnsClients["namecheap"] = ddnsservice.NewNamecheapDdnsService(namecheap.NewClient("", config.Namecheap.Password))
-	return ddnsClients
-}
-
-func getCurrentIpAddress(providers []ipprovider.CurrentIpProvider) (string, error) {
-	var currentIp string
-	for _, provider := range providers {
-		ip, err := provider.GetCurrentIp(context.Background())
-		if err != nil {
-			slog.Warn("failed to get IP from provider", slog.Any("error", err))
-		} else {
-			currentIp = ip
-		}
-	}
-	if currentIp == "" {
-		return "", fmt.Errorf("unable to get current ip")
-	}
-	return currentIp, nil
-}
-
-func processDdnsEntry(
-	ddnsEntry config.DdnsConfig,
-	currentIp string,
-	clients map[string]ddnsservice.DdnsService,
-) error {
-	client := clients[ddnsEntry.Provider]
-	if client == nil {
-		return fmt.Errorf("ddns provider not supported: %s", ddnsEntry.Provider)
-	}
-	for _, subdomain := range ddnsEntry.Subdomains {
-		// get currently configured IP
-		configuredIp, err := client.GetHostIpv4(
-			context.Background(),
-			subdomain,
-			ddnsEntry.Domain,
-		)
-		if err != nil {
-			slog.Error("failed to get current IP for subdomain", slog.String("subdomain", subdomain), slog.Any("error", err))
-			continue
-		}
-		if configuredIp == currentIp {
-			slog.Info("skipping unchanged domain", slog.String("subdomain", subdomain))
-			continue
-		}
-		slog.Info("updating IP for changed domain", slog.String("subdomain", subdomain))
-		err = client.UpdateHostIpv4(context.Background(), subdomain, ddnsEntry.Domain, currentIp)
-		if err != nil {
-			slog.Error("failed to update current IP for subdomain", slog.String("subdomain", subdomain), slog.Any("error", err))
-		}
-	}
-	return nil
+func buildDdnsServices(config *config.Config) map[string]ddnsservice.DdnsService {
+	ddnsServices := make(map[string]ddnsservice.DdnsService)
+	ddnsServices["namecheap"] = ddnsservice.NewNamecheapDdnsService(namecheap.NewClient("", config.Namecheap.Password))
+	return ddnsServices
 }
