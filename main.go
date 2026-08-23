@@ -1,3 +1,12 @@
+// Ddns-updater-go updates the IP address for hosts.
+// The command assumes it is running on a computer using the desired IP address for the DDNS record.
+// For each configured host, ddns-updater-go:
+//   - determines the current WAN IP address
+//   - compares the configured IP address for the host matches to the current IP address
+//   - updates the configured IP address for the host to the current IP address if different
+//
+// Ddns-updater-go configuration is loaded from config.yaml in the current directory.
+// See [config] for details on configuration.
 package main
 
 import (
@@ -7,15 +16,12 @@ import (
 	"os"
 
 	"github.com/twinklehawk/ddns-updater-go/internal/config"
+	"github.com/twinklehawk/ddns-updater-go/internal/ddnsservice"
 	"github.com/twinklehawk/ddns-updater-go/internal/ifconfig"
 	"github.com/twinklehawk/ddns-updater-go/internal/ipify"
+	"github.com/twinklehawk/ddns-updater-go/internal/ipprovider"
 	"github.com/twinklehawk/ddns-updater-go/internal/namecheap"
 )
-
-// TODO what to do with this interface
-type CurrentIpProvider interface {
-	GetCurrentIp(ctx context.Context) (string, error)
-}
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -23,7 +29,7 @@ func main() {
 
 	slog.Info("processing ddns entries")
 
-	config, err := config.ReadConfig()
+	config, err := config.ReadConfig("")
 	if err != nil {
 		slog.Error("unable to read config", slog.Any("error", err))
 		return
@@ -45,21 +51,20 @@ func main() {
 	slog.Info("finished processing ddns entries")
 }
 
-func buildIpProviders() []CurrentIpProvider {
-	return []CurrentIpProvider{
-		ipify.DefaultClient(),
-		ifconfig.DefaultClient(),
+func buildIpProviders() []ipprovider.CurrentIpProvider {
+	return []ipprovider.CurrentIpProvider{
+		ipify.NewClient(""),
+		ifconfig.NewClient(""),
 	}
 }
 
-func buildDdnsClients(config *config.Config) map[string]*namecheap.NamecheapDdnsClient {
-	// TODO create ddns client interface
-	ddnsClients := make(map[string]*namecheap.NamecheapDdnsClient)
-	ddnsClients["namecheap"] = namecheap.NewClient(namecheap.DefaultBaseUrl, config.Namecheap.Password)
+func buildDdnsClients(config *config.Config) map[string]ddnsservice.DdnsService {
+	ddnsClients := make(map[string]ddnsservice.DdnsService)
+	ddnsClients["namecheap"] = ddnsservice.NewNamecheapDdnsService(namecheap.NewClient("", config.Namecheap.Password))
 	return ddnsClients
 }
 
-func getCurrentIpAddress(providers []CurrentIpProvider) (string, error) {
+func getCurrentIpAddress(providers []ipprovider.CurrentIpProvider) (string, error) {
 	var currentIp string
 	for _, provider := range providers {
 		ip, err := provider.GetCurrentIp(context.Background())
@@ -78,7 +83,7 @@ func getCurrentIpAddress(providers []CurrentIpProvider) (string, error) {
 func processDdnsEntry(
 	ddnsEntry config.DdnsConfig,
 	currentIp string,
-	clients map[string]*namecheap.NamecheapDdnsClient,
+	clients map[string]ddnsservice.DdnsService,
 ) error {
 	client := clients[ddnsEntry.Provider]
 	if client == nil {
