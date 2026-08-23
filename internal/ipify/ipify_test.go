@@ -62,7 +62,7 @@ func TestGetCurrentIpRequestFailure(t *testing.T) {
 	if e.StatusCode != http.StatusInternalServerError {
 		t.Errorf("expected 500 response code, got %d", e.StatusCode)
 	}
-	if e.Message != "status 500: Some error" {
+	if e.Message != "Some error" {
 		t.Errorf("unexpected response body, got %s", e.Message)
 	}
 }

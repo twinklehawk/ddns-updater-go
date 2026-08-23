@@ -7,23 +7,6 @@ import (
 	"testing"
 )
 
-func TestGetHostIpv4(t *testing.T) {
-	client := NewClient("", "test-pass")
-
-	resp, err := client.GetHostIpv4(
-		context.Background(),
-		"",
-		"localhost",
-	)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if resp != "127.0.0.1" {
-		t.Errorf("expected response '127.0.0.1', got %q", resp)
-	}
-}
-
 func TestUpdateHostIpv4(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {

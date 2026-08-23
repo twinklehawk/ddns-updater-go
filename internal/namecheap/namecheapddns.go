@@ -1,24 +1,31 @@
+// Package namecheap provides a client to update Namecheap DDNS IP addresses.
 package namecheap
 
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
 	"time"
 )
 
 const (
-	DefaultBaseUrl = "https://dynamicdns.park-your-domain.com"
+	defaultBaseUrl = "https://dynamicdns.park-your-domain.com"
 )
 
+// NamecheapDdnsClient implements calls to update Namecheap DDNS records.
 type NamecheapDdnsClient struct {
 	httpClient *http.Client
 	baseUrl    string
 	password   string
 }
 
+// NewClient builds a new [NamecheapDdnsClient] instance.
+//
+// If baseUrl is empty, the default ipify URL is used.
 func NewClient(baseUrl string, password string) *NamecheapDdnsClient {
+	if baseUrl == "" {
+		baseUrl = defaultBaseUrl
+	}
 	return &NamecheapDdnsClient{
 		httpClient: &http.Client{Timeout: 30 * time.Second},
 		baseUrl:    baseUrl,
@@ -26,11 +33,13 @@ func NewClient(baseUrl string, password string) *NamecheapDdnsClient {
 	}
 }
 
+// NamecheapDdnsError indicates an error calling the Namecheap DDNS API.
 type NamecheapDdnsError struct {
 	StatusCode int
 	Message    string
 }
 
+// Error returns the error string for a [NamecheapDdnsError] instance.
 func (e *NamecheapDdnsError) Error() string {
 	var message string
 	if e.Message != "" {
@@ -41,27 +50,8 @@ func (e *NamecheapDdnsError) Error() string {
 	return fmt.Sprintf("Error calling Namecheap DDNS: %d - %s", e.StatusCode, message)
 }
 
-func (client *NamecheapDdnsClient) GetHostIpv4(
-	ctx context.Context,
-	subdomain string,
-	domain string,
-) (string, error) {
-	var host string
-	if subdomain != "" {
-		host = subdomain + "." + domain
-	} else {
-		host = domain
-	}
-	addr, err := net.DefaultResolver.LookupIP(ctx, "ip4", host)
-	if err != nil {
-		return "", fmt.Errorf("unable to look up IP for host: %w", err)
-	}
-	if len(addr) == 0 {
-		return "", &NamecheapDdnsError{StatusCode: 500, Message: "No IP found for host"}
-	}
-	return addr[0].String(), nil
-}
-
+// UpdateHostIpv4 updates the IP address for a host (subdomain + domain) to the specified IP address.
+// Namecheap only supports DDNS with IPv4 addresses.
 func (client *NamecheapDdnsClient) UpdateHostIpv4(
 	ctx context.Context,
 	subdomain string,
