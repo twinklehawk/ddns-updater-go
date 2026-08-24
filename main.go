@@ -33,7 +33,7 @@ func main() {
 
 func run() error {
 	slog.Info("loading config")
-	config, err := config.ReadConfig("")
+	config, err := config.LoadConfig("", getEnvConfigMap())
 	if err != nil {
 		return err
 	}
@@ -64,4 +64,10 @@ func buildDdnsServices(config *config.Config) map[string]ddnsservice.DdnsService
 	ddnsServices := make(map[string]ddnsservice.DdnsService)
 	ddnsServices["namecheap"] = ddnsservice.NewNamecheapDdnsService(namecheap.NewClient("", config.Namecheap.Password))
 	return ddnsServices
+}
+
+func getEnvConfigMap() []config.EnvConfigEntry {
+	return []config.EnvConfigEntry{
+		{Env: "NAMECHEAP_PASSWORD", Handler: func(s string, c *config.Config) { c.Namecheap.Password = s }},
+	}
 }
