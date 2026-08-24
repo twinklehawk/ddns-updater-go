@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 
 	"go.yaml.in/yaml/v4"
@@ -33,7 +34,7 @@ func LoadConfig(configFile string, envEntries []EnvConfigEntry) (*Config, error)
 	if configFile == "" {
 		configFile = defaultConfigFile
 	}
-	config, err := loadConfigFromFile(defaultConfigFile)
+	config, err := loadConfigFromFile(configFile)
 	if err != nil {
 		return nil, err
 	}
@@ -42,6 +43,7 @@ func LoadConfig(configFile string, envEntries []EnvConfigEntry) (*Config, error)
 }
 
 func loadConfigFromFile(configFile string) (*Config, error) {
+	slog.Debug("reading config file" + configFile)
 	data, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file %s: %w", configFile, err)
@@ -58,6 +60,7 @@ func overrideConfigFromEnv(config *Config, envEntries []EnvConfigEntry) {
 	for _, entry := range envEntries {
 		val, isSet := os.LookupEnv(entry.Env)
 		if isSet {
+			slog.Debug("overriding value for " + entry.Env + " from env")
 			entry.Handler(val, config)
 		}
 	}
