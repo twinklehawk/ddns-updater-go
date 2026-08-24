@@ -1,16 +1,5 @@
-// Package config handles reading configuration from a yaml file.
+// Package config handles reading configuration from a yaml file and env vars.
 package config
-
-import (
-	"fmt"
-	"os"
-
-	"go.yaml.in/yaml/v4"
-)
-
-const (
-	defaultConfigFile = "./config.yaml"
-)
 
 // Config is the configuration for the ddns-updater-go command.
 type Config struct {
@@ -33,24 +22,4 @@ type DdnsConfig struct {
 type NamecheapConfig struct {
 	// Password is the namecheap password to use when updating the DDNS record for a domain.
 	Password string
-}
-
-// ReadConfig reads configuration from a YAML file and parses the contents into a Config instance.
-//
-// configFile is the path to the YAML file to load configuration from.
-// If configFile is empty, the default of "./config.yaml" will be used.
-func ReadConfig(configFile string) (*Config, error) {
-	if configFile == "" {
-		configFile = defaultConfigFile
-	}
-	data, err := os.ReadFile(configFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read config file %s: %w", configFile, err)
-	}
-	c := Config{}
-	err = yaml.Unmarshal(data, &c)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read config file %s: %w", configFile, err)
-	}
-	return &c, nil
 }
