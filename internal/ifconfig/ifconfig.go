@@ -4,6 +4,7 @@ package ifconfig
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -63,8 +64,9 @@ func (client *IfConfigClient) GetCurrentIp(ctx context.Context) (string, error) 
 	if err != nil {
 		return "", fmt.Errorf("failed to execute request: %w", err)
 	}
-
-	defer resp.Body.Close()
+	defer func() {
+		err = errors.Join(err, resp.Body.Close())
+	}()
 
 	respData, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -78,5 +80,5 @@ func (client *IfConfigClient) GetCurrentIp(ctx context.Context) (string, error) 
 		}
 	}
 
-	return string(respData), nil
+	return string(respData), err
 }

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"testing"
 )
@@ -20,7 +21,11 @@ namecheap:
 	if err != nil {
 		t.Fatalf("failed to create temp config file: %v", err)
 	}
-	defer os.Remove(file)
+	defer func() {
+		if err = os.Remove(file); err != nil {
+			t.Logf("failed to remove temp file %s: %v", file, err)
+		}
+	}()
 
 	config, err := LoadConfig(file, nil)
 	if err != nil {
@@ -65,14 +70,14 @@ namecheap:
 	if err != nil {
 		t.Fatalf("failed to create temp config file: %v", err)
 	}
-	defer os.Remove(file)
+	defer func() {
+		if err = os.Remove(file); err != nil {
+			t.Logf("failed to remove temp file %s: %v", file, err)
+		}
+	}()
 
 	envkey := "TEST_ENV_KEY"
-	err = os.Setenv(envkey, "test-pass-2")
-	if err != nil {
-		t.Fatalf("failed to set envvar: %v", err)
-	}
-	defer os.Unsetenv(envkey)
+	t.Setenv(envkey, "test-pass-2")
 
 	envEntries := []EnvConfigEntry{
 		{Env: envkey, Handler: func(value string, config *Config) { config.Namecheap.Password = value }},
@@ -95,11 +100,13 @@ func createConfigFile(data string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer file.Close()
+	defer func() {
+		err = errors.Join(err, file.Close())
+	}()
 
 	_, err = file.WriteString(data)
 	if err != nil {
 		return "", err
 	}
-	return file.Name(), nil
+	return file.Name(), err
 }

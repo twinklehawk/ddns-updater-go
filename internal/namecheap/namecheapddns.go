@@ -3,6 +3,7 @@ package namecheap
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -74,7 +75,9 @@ func (client *NamecheapDdnsClient) UpdateHostIpv4(
 	if err != nil {
 		return fmt.Errorf("failed to execute request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err = errors.Join(err, resp.Body.Close())
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return &NamecheapDdnsError{
@@ -83,5 +86,5 @@ func (client *NamecheapDdnsClient) UpdateHostIpv4(
 		}
 	}
 
-	return nil
+	return err
 }

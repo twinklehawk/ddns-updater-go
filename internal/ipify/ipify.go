@@ -4,6 +4,7 @@ package ipify
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -24,6 +25,9 @@ type IpifyClient struct {
 //
 // If baseUrl is empty, the default ipify URL is used.
 func NewClient(baseUrl string) *IpifyClient {
+	if baseUrl == "" {
+		baseUrl = defaultBaseUrl
+	}
 	return &IpifyClient{
 		httpClient: &http.Client{Timeout: 30 * time.Second},
 		baseUrl:    baseUrl,
@@ -61,7 +65,9 @@ func (client *IpifyClient) GetCurrentIp(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("failed to execute request: %w", err)
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		err = errors.Join(err, resp.Body.Close())
+	}()
 
 	respData, err := io.ReadAll(resp.Body)
 	if err != nil {

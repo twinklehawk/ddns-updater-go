@@ -37,7 +37,7 @@ func (service *namecheapDdnsService) GetHostIpv4(
 		return "", fmt.Errorf("unable to look up IP for host: %w", err)
 	}
 	if len(addr) == 0 {
-		return "", fmt.Errorf("No IP found for host")
+		return "", fmt.Errorf("no IP found for host")
 	}
 	return addr[0].String(), nil
 }

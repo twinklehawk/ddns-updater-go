@@ -49,7 +49,10 @@ func TestUpdateHostIpv4Failure(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Some error"))
+		_, err := w.Write([]byte("Some error"))
+		if err != nil {
+			t.Fatalf("unable to write response body: %v", err)
+		}
 	}))
 	defer server.Close()
 
