@@ -21,7 +21,10 @@ func TestGetCurrentIp(t *testing.T) {
 
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("192.168.1.1"))
+		_, err := w.Write([]byte("192.168.1.1"))
+		if err != nil {
+			t.Fatalf("unable to write response body: %v", err)
+		}
 	}))
 	defer server.Close()
 
@@ -41,7 +44,10 @@ func TestGetCurrentIpRequestFailure(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Some error"))
+		_, err := w.Write([]byte("Some error"))
+		if err != nil {
+			t.Fatalf("unable to write response body: %v", err)
+		}
 	}))
 	defer server.Close()
 
