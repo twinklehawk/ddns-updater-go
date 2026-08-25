@@ -1,0 +1,38 @@
+name: Deploy release
+on:
+  release:
+    types: [ published ]
+jobs:
+  docker-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version: 1.27.0
+      - name: build
+        run: CGO_ENABLED=0 go build
+      - name: docker image
+        run: |
+          cd app
+          TAG_NAME=${GITHUB_REF#"refs/tags/"}
+          docker build -t ddns-updater-go \
+            --label="org.opencontainers.image.version=$TAG_NAME" \
+            --label="org.opencontainers.image.revision=$GITHUB_SHA" \
+            --label="org.opencontainers.image.created=$(date +'%Y-%m-%dT%H:%M:%S')" \
+            .
+      - name: log in to registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
+      - name: publish docker image
+        run: |
+          TAG_NAME=${GITHUB_REF#"refs/tags/"}
+          # strip "v" prefix from tag name
+          TAG_NAME=$(echo $TAG_NAME | sed -e 's/^v//')
+          echo "Publishing image to ghcr.io/twinklehawk/ddns-updater-go:$TAG_NAME"
+          docker tag ddns-updater-go ghcr.io/twinklehawk/ddns-updater-go:$TAG_NAME
+          docker tag ddns-updater-go ghcr.io/twinklehawk/ddns-updater-go:latest
+          docker push ghcr.io/twinklehawk/ddns-updater-go:$TAG_NAME
+          docker push ghcr.io/twinklehawk/ddns-updater-go:latest
