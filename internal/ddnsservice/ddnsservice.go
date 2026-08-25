@@ -4,6 +4,8 @@ package ddnsservice
 
 import "context"
 
+//go:generate go tool mockgen -destination=../mocks/mock_ddnsservice.go -package=mocks . DdnsService
+
 // A DdnsService reads and writes DDNS records for a host.
 type DdnsService interface {
 	// GetHostIpv4 retrieves the currently configured IP address for the host (subdomain + domain).
