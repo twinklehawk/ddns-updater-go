@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"testing"
 
 	"github.com/twinklehawk/ddns-updater-go/internal/config"
@@ -51,28 +50,4 @@ func TestProcessDdnsEntry_UnchangedIp(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-}
-
-type mockDdnsService struct {
-	ip           string
-	getError     error
-	updateError  error
-	updateCalled bool
-}
-
-func (s mockDdnsService) GetHostIpv4(
-	ctx context.Context,
-	subdomain string,
-	domain string,
-) (string, error) {
-	return s.ip, s.getError
-}
-
-func (s mockDdnsService) UpdateHostIpv4(
-	ctx context.Context,
-	subdomain string,
-	domain string,
-	ip string,
-) error {
-	return s.updateError
 }
