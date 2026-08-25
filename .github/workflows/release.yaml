@@ -17,7 +17,6 @@ jobs:
         run: CGO_ENABLED=0 go build
       - name: docker image
         run: |
-          cd app
           TAG_NAME=${GITHUB_REF#"refs/tags/"}
           docker build -t ddns-updater-go \
             --label="org.opencontainers.image.version=$TAG_NAME" \

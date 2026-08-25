@@ -49,6 +49,5 @@ func (service *namecheapDdnsService) UpdateHostIpv4(
 	domain string,
 	ip string,
 ) error {
-	// TODO needs a unit test
 	return service.client.UpdateHostIpv4(ctx, subdomain, domain, ip)
 }

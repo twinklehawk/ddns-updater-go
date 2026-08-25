@@ -10,8 +10,6 @@ import (
 	"github.com/twinklehawk/ddns-updater-go/internal/ipprovider"
 )
 
-// TODO unit tests
-
 // A ddnsUpdater updates DNS records for hosts to the current IP address.
 // The [ddnsUpdater.processDdnsEntry] function is the entry point for updating DDNS data.
 type ddnsUpdater struct {
@@ -55,6 +53,7 @@ func (updater ddnsUpdater) getCurrentIpAddress() (string, error) {
 			slog.Warn("failed to get IP from provider", slog.Any("error", err))
 		} else {
 			currentIp = ip
+			break
 		}
 	}
 	if currentIp == "" {
@@ -78,10 +77,10 @@ func processDdnsHost(
 		return fmt.Errorf("failed to get current IP for subdomain %s: %w", subdomain, err)
 	}
 	if configuredIp == ip {
-		slog.Info("skipping unchanged domain", slog.String("subdomain", subdomain))
+		slog.Info("skipping unchanged domain " + subdomain)
 		return nil
 	}
-	slog.Info("updating IP for changed domain", slog.String("subdomain", subdomain))
+	slog.Info("updating IP for changed domain " + subdomain)
 	err = service.UpdateHostIpv4(context.Background(), subdomain, domain, ip)
 	if err != nil {
 		return fmt.Errorf("failed to update IP for subdomain %s: %w", subdomain, err)
