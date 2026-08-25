@@ -16,3 +16,5 @@ jobs:
           version: v2.13.1
       - name: test
         run: go test -cover ./...
+      - name: build
+        run: go build
