@@ -122,7 +122,7 @@ func TestUpdateHostIpv4_Success(t *testing.T) {
 		"test.com",
 		porkbun.RecordTypeA,
 		"test",
-		expectedRequest,
+		&expectedRequest,
 	).Return(&porkbun.EditDNSRecordByNameTypeResponse{}, nil)
 	service := porkbunDdnsService{client: mockClient}
 
