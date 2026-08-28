@@ -5,7 +5,8 @@
 //   - compares the configured IP address for the host matches to the current IP address
 //   - updates the configured IP address for the host to the current IP address if different
 //
-// Ddns-updater-go configuration is loaded from config.yaml in the current directory.
+// Ddns-updater-go configuration is loaded from config.yaml in the current directory and
+// environment variables.
 // See the config package for details on configuration.
 package main
 
@@ -13,6 +14,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/greatliontech/porkbun-go"
 	"github.com/twinklehawk/ddns-updater-go/internal/config"
 	"github.com/twinklehawk/ddns-updater-go/internal/ddnsservice"
 	"github.com/twinklehawk/ddns-updater-go/internal/ifconfig"
@@ -62,12 +64,26 @@ func buildIpProviders() []ipprovider.CurrentIpProvider {
 
 func buildDdnsServices(config *config.Config) map[string]ddnsservice.DdnsService {
 	ddnsServices := make(map[string]ddnsservice.DdnsService)
-	ddnsServices["namecheap"] = ddnsservice.NewNamecheapDdnsService(namecheap.NewClient("", config.Namecheap.Password))
+	namecheapClient := namecheap.NewClient("", config.Namecheap.Password)
+	ddnsServices["namecheap"] = ddnsservice.NewNamecheapDdnsService(namecheapClient)
+	porkbunClient := porkbun.NewClient(config.Porkbun.ApiKey, config.Porkbun.SecretApiKey)
+	ddnsServices["porkbun"] = ddnsservice.NewPorkbunDdnsService(porkbunClient)
 	return ddnsServices
 }
 
 func getEnvConfigMap() []config.EnvConfigEntry {
 	return []config.EnvConfigEntry{
-		{Env: "NAMECHEAP_PASSWORD", Handler: func(s string, c *config.Config) { c.Namecheap.Password = s }},
+		{
+			Env:     "NAMECHEAP_PASSWORD",
+			Handler: func(s string, c *config.Config) { c.Namecheap.Password = s },
+		},
+		{
+			Env:     "PORKBUN_API_KEY",
+			Handler: func(s string, c *config.Config) { c.Porkbun.ApiKey = s },
+		},
+		{
+			Env:     "PORKBUN_SECRET_API_KEY",
+			Handler: func(s string, c *config.Config) { c.Porkbun.SecretApiKey = s },
+		},
 	}
 }

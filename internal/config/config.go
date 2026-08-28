@@ -5,6 +5,7 @@ package config
 type Config struct {
 	Ddns      DdnsConfig
 	Namecheap NamecheapConfig
+	Porkbun   PorkbunConfig
 }
 
 // DdnsConfig is the configuration for the domains that the command should update.
@@ -22,4 +23,10 @@ type DdnsConfig struct {
 type NamecheapConfig struct {
 	// Password is the namecheap password to use when updating the DDNS record for a domain.
 	Password string
+}
+
+// PorkbunConfig is the configuration for calling porkbun.
+type PorkbunConfig struct {
+	ApiKey       string
+	SecretApiKey string
 }
