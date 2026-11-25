@@ -3,7 +3,7 @@ module github.com/twinklehawk/ddns-updater-go
 go 1.27.0
 
 require (
-	github.com/greatliontech/porkbun-go v1.0.0
+	github.com/greatliontech/porkbun-go v1.0.1
 	go.uber.org/mock v0.6.0
 	go.yaml.in/yaml/v4 v4.0.0
 )
